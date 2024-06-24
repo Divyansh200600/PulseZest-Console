@@ -43,6 +43,17 @@ const EmployeeDashboard = () => {
     fetchUserData();
   }, [navigate]);
 
+  useEffect(() => {
+    // Check if it's past 11:59 PM and attendance hasn't been marked
+    const now = new Date();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999); // Set to 11:59:59.999 PM
+
+    if (now > endOfDay && !attendanceMarked) {
+      markAttendance('absent');
+    }
+  }, [attendanceMarked]);
+
   const fetchAttendanceData = async (userId) => {
     const today = new Date();
     const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
@@ -59,7 +70,7 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const markAttendance = async () => {
+  const markAttendance = async (attendanceStatus) => {
     const user = auth.currentUser;
 
     if (user) {
@@ -67,28 +78,16 @@ const EmployeeDashboard = () => {
       const today = new Date();
       const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
-      // Check if last marked time exists and compare with current time
-      if (lastMarkedTime) {
-        const lastMarkedDate = new Date(lastMarkedTime);
-        const timeDifference = today.getTime() - lastMarkedDate.getTime();
-        const hoursDifference = timeDifference / (1000 * 60 * 60);
-
-        // Check if less than 24 hours have passed since last marking
-        if (hoursDifference < 24) {
-          console.log('Cannot mark attendance again within 24 hours.');
-          return;
-        }
-      }
-
       const attendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, formattedDate);
 
       try {
         await setDoc(attendanceDocRef, {
-          attendance: 'present',
+          attendance: attendanceStatus,
           timestamp: serverTimestamp(),
         });
 
-        setAttendanceData({ attendance: 'present' });
+        // Update local state
+        setAttendanceData({ attendance: attendanceStatus });
         setAttendanceMarked(true);
         setLastMarkedTime(today); // Update last marked time
       } catch (error) {
@@ -97,10 +96,11 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleDepartmentClick = () =>{
-
-    
-  }
+  const handleDepartmentClick = (dept) => {
+    // Implement your logic here
+    console.log(`Clicked department: ${dept}`);
+    // Example: Navigate to a department-specific page or show department details
+  };
 
   const handleLogout = async () => {
     try {
@@ -112,6 +112,7 @@ const EmployeeDashboard = () => {
   };
 
   const handleViewFile = (fileUrl) => {
+    // Implement your logic here
     window.open(fileUrl); // Opens the file in a new tab
   };
 
@@ -251,9 +252,6 @@ const EmployeeDashboard = () => {
           <section style={styles.section}>
             <h3 style={styles.subSectionTitle}>Bank Details</h3>
             <div style={styles.dataItem}>
-              <strong>Bank Name:</strong> {userData.bankName}
-            </div>
-            <div style={styles.dataItem}>
               <strong>Account Holder Name:</strong> {userData.accountHolderName}
             </div>
             <div style={styles.dataItem}>
@@ -270,7 +268,7 @@ const EmployeeDashboard = () => {
               {attendanceMarked ? (
                 <p>Attendance for today: {attendanceData.attendance}</p>
               ) : (
-                <button style={styles.markButton} onClick={markAttendance}>Mark Attendance</button>
+                <button style={styles.markButton} onClick={() => markAttendance('present')}>Mark Attendance</button>
               )}
             </div>
           </section>
