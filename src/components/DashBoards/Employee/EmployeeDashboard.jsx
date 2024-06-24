@@ -1,28 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { collection, doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebaseConfig';
-// import EmployeeSidebar from '../Employee/EmployeeSidebar';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login', { replace: true });
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
-  const formatDate = (timestamp) => {
-    const date = timestamp.toDate(); // Convert Firebase Timestamp to JavaScript Date object
-    return date.toLocaleDateString(); // Format Date as a locale date string
-  };
+  const [attendanceData, setAttendanceData] = useState({});
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -37,13 +24,8 @@ const EmployeeDashboard = () => {
 
           if (employeeDetailsDocSnap.exists()) {
             const userData = employeeDetailsDocSnap.data();
-
-            // Handle Firebase Timestamps if present
-            if (userData && userData.startDate) {
-              userData.startDate = userData.startDate.toDate(); // Convert Firebase Timestamp to Date object
-            }
-
             setUserData(userData);
+            fetchAttendanceData(userId);
           } else {
             console.log('No matching document for Employee.');
           }
@@ -60,9 +42,66 @@ const EmployeeDashboard = () => {
     fetchUserData();
   }, [navigate]);
 
+  const fetchAttendanceData = async (userId) => {
+    const today = new Date();
+    const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+
+    const attendanceDocRef = doc(collection(db, `employeeDetails/${userId}/attendance`), formattedDate);
+    const attendanceDocSnap = await getDoc(attendanceDocRef);
+
+    if (attendanceDocSnap.exists()) {
+      setAttendanceData(attendanceDocSnap.data());
+      setAttendanceMarked(true);
+    } else {
+      setAttendanceData({ attendance: 'absent' });
+      setAttendanceMarked(false);
+    }
+  };
+
+  const handleDepartmentClick = () =>{
+    
+  }
+
+  const markAttendance = async () => {
+    const user = auth.currentUser;
+
+    if (user) {
+      const userId = user.uid;
+      const today = new Date();
+      const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+
+      const attendanceDocRef = doc(collection(db, `employeeDetails/${userId}/attendance`), formattedDate);
+
+      try {
+        await setDoc(attendanceDocRef, {
+          attendance: 'present',
+          timestamp: serverTimestamp(),
+        });
+
+        setAttendanceData({ attendance: 'present' });
+        setAttendanceMarked(true);
+      } catch (error) {
+        console.error('Error marking attendance:', error);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  const handleViewFile = (fileUrl) => {
+    window.open(fileUrl); // Opens the file in a new tab
+  };
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div style={styles.container}>
         <p>Loading...</p>
       </div>
     );
@@ -70,28 +109,16 @@ const EmployeeDashboard = () => {
 
   if (!userData) {
     return (
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', backgroundColor: '#fff', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Employee Dashboard!</h1>
-          <button
-            style={{
-              backgroundColor: '#f44336',
-              color: '#fff',
-              border: 'none',
-              padding: '10px 20px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              transition: 'background-color 0.3s ease',
-            }}
-            onClick={handleLogout}
-          >
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
+          <button style={styles.logoutButton} onClick={handleLogout}>
             Logout
           </button>
         </header>
-        <main style={{ padding: '20px', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>User Data:</h2>
+        <main style={{ ...styles.main, overflowY: 'auto' }}>
+          <div style={styles.card}>
+            <h2 style={styles.subTitle}>User Data:</h2>
             <p>No user data found for Employee.</p>
           </div>
         </main>
@@ -101,45 +128,259 @@ const EmployeeDashboard = () => {
 
   // Display userData once loaded
   return (
-    // <div className="flex">
-    //         <EmployeeSidebar />
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', backgroundColor: '#fff', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
-    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Employee Dashboard!</h1>
-      <button
-        style={{
-          backgroundColor: '#f44336',
-          color: '#fff',
-          border: 'none',
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          borderRadius: '4px',
-          transition: 'background-color 0.3s ease',
-        }}
-        onClick={handleLogout}
-      >
-        Logout
-      </button>
-    </header>
-    <main style={{ padding: '20px', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>User Data: <span style={{ fontWeight: 'normal' }}>{userData.userId}</span></h2>
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
+        <button style={styles.logoutButton} onClick={handleLogout}>
+          Logout
+        </button>
+      </header>
+      <main style={{ ...styles.main, overflowY: 'auto' }}>
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Details of Employee</h2>
 
-        <div style={{ backgroundColor: '#fff', boxShadow: '0 0 5px rgba(0, 0, 0, 0.1)', padding: '20px', borderRadius: '4px' }}>
-          {Object.keys(userData).map((key) => (
-            <div key={key} style={{ marginBottom: '15px' }}>
-              <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> 
-              {typeof userData[key] === 'object' && userData[key] !== null && userData[key].hasOwnProperty('seconds') ?
-                formatDate(userData[key]) : userData[key]}
+          <section style={styles.section}>
+            <div style={styles.employeeDetails}>
+              <div style={styles.avatarContainer}>
+                <img src={userData.passportPhotoUrl} alt="Employee Avatar" style={styles.avatar} />
+              </div>
+              <div style={styles.personalInfo}>
+                <h3 style={styles.subSectionTitle}>Personal Details</h3>
+                <div style={styles.dataItems}>
+                  <div style={styles.dataItem}>
+                    <strong>Name:</strong> {userData.fullName}
+                  </div>
+                  <div style={styles.dataItem}>
+                    <strong>Email:</strong> {userData.email}
+                  </div>
+                  <div style={styles.dataItem}>
+                    <strong>Address:</strong> {userData.address}
+                  </div>
+                  <div style={styles.dataItem}>
+                    <strong>Phone:</strong> {userData.phoneNumber}
+                  </div>
+                  <div style={styles.dataItem}>
+                    <strong>Alternative Phone No:</strong> {userData.alternativePhoneNumber}
+                  </div>
+                  <div style={styles.dataItem}>
+                    <strong>Microsoft Teams Id:</strong> {userData.teamsId}
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
+          </section>
+
+          <section style={styles.section}>
+            <h3 style={styles.subSectionTitle}>Working Department</h3>
+            <div style={styles.dataItems}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '5px' }}>
+                {userData.department && userData.department.length > 0 ? (
+                  userData.department.map((dept, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        ...styles.departmentTag,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => handleDepartmentClick(dept)}
+                    >
+                      {dept}
+                    </span>
+                  ))
+                ) : (
+                  <span>No department assigned</span>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section style={styles.section}>
+            <h3 style={styles.subSectionTitle}>Documents</h3>
+            <div style={styles.dataItems}>
+              {userData.passportPhotoUrl && (
+                <div style={styles.dataItem}>
+                  <strong>Passport Size Photo:</strong>
+                  {/* Example view button for uploaded photo */}
+                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.passportPhotoUrl)}>
+                    View
+                  </button>
+                </div>
+              )}
+              {userData.resumeUrl && (
+                <div style={styles.dataItem}>
+                  <strong>Resume:</strong>
+                  {/* Example view button for uploaded resume */}
+                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.resumeUrl)}>
+                    View
+                  </button>
+                </div>
+              )}
+              {userData.aadharCardUrl && (
+                <div style={styles.dataItem}>
+                  <strong>Aadhar Card:</strong>
+                  {/* Example view button for uploaded Aadhar card */}
+                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.aadharCardUrl)}>
+                    View
+                  </button>
+                </div>
+              )}
+              {userData.panCardUrl && (
+                <div style={styles.dataItem}>
+                  <strong>Pan Card:</strong>
+                  {/* Example view button for uploaded Pan card */}
+                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.panCardUrl)}>
+                    View
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section style={styles.section}>
+            <h3 style={styles.subSectionTitle}>Bank Details</h3>
+            <div style={styles.dataItem}>
+              <strong>Bank Name:</strong> {userData.bankName}
+            </div>
+            <div style={styles.dataItem}>
+              <strong>Account Holder Name:</strong> {userData.accountHolderName}
+            </div>
+            <div style={styles.dataItem}>
+              <strong>Account Number:</strong> {userData.bankAccountNumber}
+            </div>
+            <div style={styles.dataItem}>
+              <strong>IFSC Code:</strong> {userData.ifscCode}
+            </div>
+          </section>
+
+          <section style={styles.section}>
+            <h3 style={styles.subSectionTitle}>Attendance</h3>
+            <div style={styles.dataItems}>
+              {attendanceMarked ? (
+                <p>Attendance for today: {attendanceData.attendance}</p>
+              ) : (
+                <button style={styles.markButton} onClick={markAttendance}>Mark Attendance</button>
+              )}
+            </div>
+          </section>
         </div>
-      </div>
-    </main>
-  </div>
-  // </div>
+      </main>
+    </div>
   );
 };
 
+const styles = {
+  container: {
+    maxWidth: '900px',
+    margin: '0 auto',
+    padding: '20px',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '10px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#333',
+    margin: '0',
+  },
+  logoutButton: {
+    backgroundColor: '#f44336',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 20px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+    transition: 'background-color 0.3s ease',
+  },
+  main: {
+    backgroundColor: '#ffffff',
+    padding: '20px',
+    borderRadius: '10px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    overflowY: 'auto', // Scrollbar for main content
+    maxHeight: '60vh', // Limit height and add scroll bar when content exceeds
+  },
+  card: {
+    backgroundColor: '#fff',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    padding: '20px',
+    borderRadius: '10px',
+  },
+  sectionTitle: {
+    fontSize: '20px',
+    marginBottom: '10px',
+    color: '#555',
+  },
+  subSectionTitle: {
+    fontSize: '18px',
+    marginBottom: '10px',
+    color: '#333',
+  },
+  dataItems: {
+    marginTop: '10px',
+  },
+  dataItem: {
+    marginBottom: '10px',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  departmentTag: {
+    backgroundColor: '#007bff',
+    color: 'white',
+    padding: '5px 10px',
+    border: 'none',
+    borderRadius: '5px',
+    marginRight: '10px',
+    marginBottom: '5px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+  viewButton: {
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    padding: '5px 10px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    marginLeft: '10px',
+    transition: 'background-color 0.3s ease',
+  },
+  employeeDetails: {
+    display: 'flex',
+    alignItems: 'flex-start',
+  },
+  avatarContainer: {
+    marginRight: '20px',
+  },
+  avatar: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+  personalInfo: {
+    flex: '1',
+  },
+  markButton: {
+    backgroundColor: '#2196F3',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+    transition: 'background-color 0.3s ease',
+  },
+};
+
 export default EmployeeDashboard;
+
