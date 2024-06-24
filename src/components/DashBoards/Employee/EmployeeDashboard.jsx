@@ -10,6 +10,7 @@ const EmployeeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [attendanceData, setAttendanceData] = useState({});
   const [attendanceMarked, setAttendanceMarked] = useState(false);
+  const [lastMarkedTime, setLastMarkedTime] = useState(null); // State to store last attendance marked time
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -19,7 +20,7 @@ const EmployeeDashboard = () => {
         const userId = user.uid;
 
         try {
-          const employeeDetailsDocRef = doc(collection(db, 'employeeDetails'), userId);
+          const employeeDetailsDocRef = doc(db, 'employeeDetails', userId);
           const employeeDetailsDocSnap = await getDoc(employeeDetailsDocRef);
 
           if (employeeDetailsDocSnap.exists()) {
@@ -46,7 +47,7 @@ const EmployeeDashboard = () => {
     const today = new Date();
     const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
-    const attendanceDocRef = doc(collection(db, `employeeDetails/${userId}/attendance`), formattedDate);
+    const attendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, formattedDate);
     const attendanceDocSnap = await getDoc(attendanceDocRef);
 
     if (attendanceDocSnap.exists()) {
@@ -58,10 +59,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleDepartmentClick = () =>{
-    
-  }
-
   const markAttendance = async () => {
     const user = auth.currentUser;
 
@@ -70,7 +67,20 @@ const EmployeeDashboard = () => {
       const today = new Date();
       const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
-      const attendanceDocRef = doc(collection(db, `employeeDetails/${userId}/attendance`), formattedDate);
+      // Check if last marked time exists and compare with current time
+      if (lastMarkedTime) {
+        const lastMarkedDate = new Date(lastMarkedTime);
+        const timeDifference = today.getTime() - lastMarkedDate.getTime();
+        const hoursDifference = timeDifference / (1000 * 60 * 60);
+
+        // Check if less than 24 hours have passed since last marking
+        if (hoursDifference < 24) {
+          console.log('Cannot mark attendance again within 24 hours.');
+          return;
+        }
+      }
+
+      const attendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, formattedDate);
 
       try {
         await setDoc(attendanceDocRef, {
@@ -80,11 +90,17 @@ const EmployeeDashboard = () => {
 
         setAttendanceData({ attendance: 'present' });
         setAttendanceMarked(true);
+        setLastMarkedTime(today); // Update last marked time
       } catch (error) {
         console.error('Error marking attendance:', error);
       }
     }
   };
+
+  const handleDepartmentClick = () =>{
+
+    
+  }
 
   const handleLogout = async () => {
     try {
@@ -116,9 +132,9 @@ const EmployeeDashboard = () => {
             Logout
           </button>
         </header>
-        <main style={{ ...styles.main, overflowY: 'auto' }}>
+        <main style={styles.main}>
           <div style={styles.card}>
-            <h2 style={styles.subTitle}>User Data:</h2>
+            <h2 style={styles.sectionTitle}>User Data:</h2>
             <p>No user data found for Employee.</p>
           </div>
         </main>
@@ -135,7 +151,7 @@ const EmployeeDashboard = () => {
           Logout
         </button>
       </header>
-      <main style={{ ...styles.main, overflowY: 'auto' }}>
+      <main style={styles.main}>
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>Details of Employee</h2>
 
@@ -200,7 +216,6 @@ const EmployeeDashboard = () => {
               {userData.passportPhotoUrl && (
                 <div style={styles.dataItem}>
                   <strong>Passport Size Photo:</strong>
-                  {/* Example view button for uploaded photo */}
                   <button style={styles.viewButton} onClick={() => handleViewFile(userData.passportPhotoUrl)}>
                     View
                   </button>
@@ -209,7 +224,6 @@ const EmployeeDashboard = () => {
               {userData.resumeUrl && (
                 <div style={styles.dataItem}>
                   <strong>Resume:</strong>
-                  {/* Example view button for uploaded resume */}
                   <button style={styles.viewButton} onClick={() => handleViewFile(userData.resumeUrl)}>
                     View
                   </button>
@@ -218,7 +232,6 @@ const EmployeeDashboard = () => {
               {userData.aadharCardUrl && (
                 <div style={styles.dataItem}>
                   <strong>Aadhar Card:</strong>
-                  {/* Example view button for uploaded Aadhar card */}
                   <button style={styles.viewButton} onClick={() => handleViewFile(userData.aadharCardUrl)}>
                     View
                   </button>
@@ -227,7 +240,6 @@ const EmployeeDashboard = () => {
               {userData.panCardUrl && (
                 <div style={styles.dataItem}>
                   <strong>Pan Card:</strong>
-                  {/* Example view button for uploaded Pan card */}
                   <button style={styles.viewButton} onClick={() => handleViewFile(userData.panCardUrl)}>
                     View
                   </button>
@@ -383,4 +395,3 @@ const styles = {
 };
 
 export default EmployeeDashboard;
-
