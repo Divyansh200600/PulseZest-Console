@@ -1,11 +1,11 @@
-// InternDashboard.jsx
+// WebDevDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { collection, doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../utils/firebaseConfig';
+import { auth, db } from '../../../utils/firebaseConfig';
 
-const InternDashboard = () => {
+const WebDevDashboard = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,13 +27,13 @@ const InternDashboard = () => {
         const userId = user.uid;
 
         try {
-          const internDetailsDocRef = doc(collection(db, 'internDetails'), userId);
-          const internDetailsDocSnap = await getDoc(internDetailsDocRef);
+          const webDevDocRef = doc(collection(db, 'webDevelopment'), userId);
+          const webDevDocSnap = await getDoc(webDevDocRef);
 
-          if (internDetailsDocSnap.exists()) {
-            setUserData(internDetailsDocSnap.data());
+          if (webDevDocSnap.exists()) {
+            setUserData(webDevDocSnap.data());
           } else {
-            console.log('No matching document for Intern.');
+            console.log('No matching document for Web Developer.');
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -60,7 +60,7 @@ const InternDashboard = () => {
     return (
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', backgroundColor: '#fff', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Intern Dashboard!</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Web Developer Dashboard!</h1>
           <button
             style={{
               backgroundColor: '#f44336',
@@ -80,7 +80,7 @@ const InternDashboard = () => {
         <main style={{ padding: '20px', backgroundColor: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
           <div style={{ marginBottom: '20px' }}>
             <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>User Data:</h2>
-            <p>No user data found for Intern.</p>
+            <p>No user data found for Web Developer.</p>
           </div>
         </main>
       </div>
@@ -91,7 +91,7 @@ const InternDashboard = () => {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', backgroundColor: '#fff', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Intern Dashboard!</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Web Developer Dashboard!</h1>
         <button
           style={{
             backgroundColor: '#f44336',
@@ -125,5 +125,5 @@ const InternDashboard = () => {
   );
 };
 
-export default InternDashboard;
+export default WebDevDashboard;
 

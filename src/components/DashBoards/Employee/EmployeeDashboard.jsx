@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { collection, doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../utils/firebaseConfig';
+import { auth, db } from '../../../utils/firebaseConfig';
+// import EmployeeSidebar from '../Employee/EmployeeSidebar';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -100,6 +101,8 @@ const EmployeeDashboard = () => {
 
   // Display userData once loaded
   return (
+    // <div className="flex">
+    //         <EmployeeSidebar />
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', backgroundColor: '#fff', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
     <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Welcome to Employee Dashboard!</h1>
@@ -135,6 +138,7 @@ const EmployeeDashboard = () => {
       </div>
     </main>
   </div>
+  // </div>
   );
 };
 

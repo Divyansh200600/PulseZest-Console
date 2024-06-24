@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { collection, doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../utils/firebaseConfig';
+import { auth, db } from '../../../utils/firebaseConfig';
 
 const AppDevDashboard = () => {
   const navigate = useNavigate();
