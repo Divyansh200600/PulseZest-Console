@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebaseConfig';
+import companyLogo from '../../../assets/2.png'; 
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const EmployeeDashboard = () => {
   const [attendanceData, setAttendanceData] = useState({});
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [lastMarkedTime, setLastMarkedTime] = useState(null); // State to store last attendance marked time
+  const [currentSection, setCurrentSection] = useState('profile'); // Default section to show
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -72,28 +74,53 @@ const EmployeeDashboard = () => {
 
   const markAttendance = async (attendanceStatus) => {
     const user = auth.currentUser;
-
+  
     if (user) {
       const userId = user.uid;
       const today = new Date();
       const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-
+  
+      // Mark current day's attendance
       const attendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, formattedDate);
-
+  
       try {
+        // Fetch previous day's attendance data
+        const prevDay = new Date(today);
+        prevDay.setDate(today.getDate() - 1); // Previous day
+  
+        const prevFormattedDate = `${prevDay.getDate()}-${prevDay.getMonth() + 1}-${prevDay.getFullYear()}`;
+        const prevAttendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, prevFormattedDate);
+        const prevAttendanceDocSnap = await getDoc(prevAttendanceDocRef);
+  
+        // Mark current day's attendance
         await setDoc(attendanceDocRef, {
           attendance: attendanceStatus,
           timestamp: serverTimestamp(),
         });
-
+  
         // Update local state
         setAttendanceData({ attendance: attendanceStatus });
         setAttendanceMarked(true);
         setLastMarkedTime(today); // Update last marked time
+  
+        // Check and mark previous day as absent if today's attendance is marked
+        if (attendanceStatus === 'present' && prevAttendanceDocSnap.exists()) {
+          // Do nothing if previous day is already marked
+        } else if (attendanceStatus === 'present' && !prevAttendanceDocSnap.exists()) {
+          // Mark previous day as absent
+          await setDoc(prevAttendanceDocRef, {
+            attendance: 'absent',
+            timestamp: serverTimestamp(),
+          });
+        }
       } catch (error) {
         console.error('Error marking attendance:', error);
       }
     }
+  };
+
+  const handleSectionChange = (section) => {
+    setCurrentSection(section);
   };
 
   const handleDepartmentClick = (dept) => {
@@ -143,20 +170,67 @@ const EmployeeDashboard = () => {
     );
   }
 
-  // Display userData once loaded
-  return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
-        <button style={styles.logoutButton} onClick={handleLogout}>
-          Logout
-        </button>
-      </header>
-      <main style={styles.main}>
-        <div style={styles.card}>
-          <h2 style={styles.sectionTitle}>Details of Employee</h2>
+ // Display userData once loaded
+return (
 
-          <section style={styles.section}>
+  <div>
+    <header style={styles.header}>
+  <div style={styles.titleContainer}>
+    <h1 style={styles.title}>Welcome to PulseZest!</h1>
+    <img src={companyLogo} alt="Company Logo" style={styles.companyLogo} />
+  </div>
+ 
+</header>
+
+
+  <div style={styles.container}>
+    <header style={styles.h1}>
+      <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
+      <button style={styles.logoutButton} onClick={handleLogout}>
+        Logout
+      </button>
+    </header>
+    <main style={styles.main}>
+      <div style={{ display: 'flex' }}>
+        {/* Sidebar */}
+        <div style={styles.sidebar}>
+          <button
+            style={currentSection === 'profile' ? styles.activeSidebarButton : styles.sidebarButton}
+            onClick={() => handleSectionChange('profile')}
+          >
+            Profile
+          </button>
+          <button
+            style={currentSection === 'workingDepartment' ? styles.activeSidebarButton : styles.sidebarButton}
+            onClick={() => handleSectionChange('workingDepartment')}
+          >
+           Department & Role
+          </button>
+          <button
+            style={currentSection === 'documents' ? styles.activeSidebarButton : styles.sidebarButton}
+            onClick={() => handleSectionChange('documents')}
+          >
+            Documents
+          </button>
+          <button
+            style={currentSection === 'bank' ? styles.activeSidebarButton : styles.sidebarButton}
+            onClick={() => handleSectionChange('bank')}
+          >
+            Bank Details
+          </button>
+          <button
+            style={currentSection === 'attendance' ? styles.activeSidebarButton : styles.sidebarButton}
+            onClick={() => handleSectionChange('attendance')}
+          >
+            Attendance
+          </button>
+        </div>
+        {/* Content based on currentSection */}
+        <div style={styles.content}>
+          {currentSection === 'profile' && (
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>Profile</h2>
+              <section style={styles.section}>
             <div style={styles.employeeDetails}>
               <div style={styles.avatarContainer}>
                 <img src={userData.passportPhotoUrl} alt="Employee Avatar" style={styles.avatar} />
@@ -186,9 +260,14 @@ const EmployeeDashboard = () => {
               </div>
             </div>
           </section>
-
-          <section style={styles.section}>
-            <h3 style={styles.subSectionTitle}>Working Department</h3>
+          </section>
+          
+          )}
+           {currentSection === 'workingDepartment' && (
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>Department & Role</h2>
+              <section style={styles.section}>
+           
             <div style={styles.dataItems}>
               <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '5px' }}>
                 {userData.department && userData.department.length > 0 ? (
@@ -210,47 +289,52 @@ const EmployeeDashboard = () => {
               </div>
             </div>
           </section>
-
-          <section style={styles.section}>
-            <h3 style={styles.subSectionTitle}>Documents</h3>
-            <div style={styles.dataItems}>
-              {userData.passportPhotoUrl && (
-                <div style={styles.dataItem}>
-                  <strong>Passport Size Photo:</strong>
-                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.passportPhotoUrl)}>
-                    View
-                  </button>
-                </div>
-              )}
-              {userData.resumeUrl && (
-                <div style={styles.dataItem}>
-                  <strong>Resume:</strong>
-                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.resumeUrl)}>
-                    View
-                  </button>
-                </div>
-              )}
-              {userData.aadharCardUrl && (
-                <div style={styles.dataItem}>
-                  <strong>Aadhar Card:</strong>
-                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.aadharCardUrl)}>
-                    View
-                  </button>
-                </div>
-              )}
-              {userData.panCardUrl && (
-                <div style={styles.dataItem}>
-                  <strong>Pan Card:</strong>
-                  <button style={styles.viewButton} onClick={() => handleViewFile(userData.panCardUrl)}>
-                    View
-                  </button>
-                </div>
-              )}
-            </div>
           </section>
+          )}
+          {currentSection === 'documents' && (
+           <section style={styles.section}>
+           <h3 style={styles.subSectionTitle}>Documents</h3>
+           <div style={styles.dataItems}>
+             {userData.passportPhotoUrl && (
+               <div style={styles.dataItem}>
+                 <strong>Passport Size Photo:</strong>
+                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.passportPhotoUrl)}>
+                   View
+                 </button>
+               </div>
+             )}
+             {userData.resumeUrl && (
+               <div style={styles.dataItem}>
+                 <strong>Resume:</strong>
+                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.resumeUrl)}>
+                   View
+                 </button>
+               </div>
+             )}
+             {userData.aadharCardUrl && (
+               <div style={styles.dataItem}>
+                 <strong>Aadhar Card:</strong>
+                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.aadharCardUrl)}>
+                   View
+                 </button>
+               </div>
+             )}
+             {userData.panCardUrl && (
+               <div style={styles.dataItem}>
+                 <strong>Pan Card:</strong>
+                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.panCardUrl)}>
+                   View
+                 </button>
+               </div>
+             )}
+           </div>
+         </section>
 
-          <section style={styles.section}>
-            <h3 style={styles.subSectionTitle}>Bank Details</h3>
+          )}
+          {currentSection === 'bank' && (
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>Bank Details</h2>
+              <section style={styles.section}>
             <div style={styles.dataItem}>
               <strong>Account Holder Name:</strong> {userData.accountHolderName}
             </div>
@@ -261,21 +345,29 @@ const EmployeeDashboard = () => {
               <strong>IFSC Code:</strong> {userData.ifscCode}
             </div>
           </section>
-
-          <section style={styles.section}>
-            <h3 style={styles.subSectionTitle}>Attendance</h3>
-            <div style={styles.dataItems}>
-              {attendanceMarked ? (
-                <p>Attendance for today: {attendanceData.attendance}</p>
-              ) : (
-                <button style={styles.markButton} onClick={() => markAttendance('present')}>Mark Attendance</button>
-              )}
-            </div>
           </section>
+          )}
+          {currentSection === 'attendance' && (
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>Attendance</h2>
+              {/* Attendance content here */}
+              <div style={styles.dataItems}>
+                {attendanceMarked ? (
+                  <p>Attendance for today: {attendanceData.attendance}</p>
+                ) : (
+                  <button style={styles.markButton} onClick={() => markAttendance('present')}>
+                    Mark Attendance
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+  </div>
+  </div>
+);
 };
 
 const styles = {
@@ -316,12 +408,47 @@ const styles = {
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
     overflowY: 'auto', // Scrollbar for main content
     maxHeight: '60vh', // Limit height and add scroll bar when content exceeds
+    flex: '1', // Fill remaining space in the flex container
   },
-  card: {
-    backgroundColor: '#fff',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  sidebar: {
+    backgroundColor: '#f0f0f0',
     padding: '20px',
+    minWidth: '200px',
+    marginRight: '20px',
     borderRadius: '10px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  sidebarButton: {
+    backgroundColor: '#ddd',
+    color: '#333',
+    border: 'none',
+    padding: '10px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+    marginBottom: '10px',
+    textAlign: 'left',
+    transition: 'background-color 0.3s ease',
+  },
+  activeSidebarButton: {
+    backgroundColor: '#007bff',
+    color: '#fff',
+    border: 'none',
+    padding: '10px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+    marginBottom: '10px',
+    textAlign: 'left',
+    transition: 'background-color 0.3s ease',
+  },
+  content: {
+    flex: '1', // Fill remaining space in the flex container
+  },
+  section: {
+    marginBottom: '20px',
   },
   sectionTitle: {
     fontSize: '20px',
@@ -390,6 +517,33 @@ const styles = {
     borderRadius: '5px',
     transition: 'background-color 0.3s ease',
   },
+    
+  h1: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    borderBottom: '1px solid #ddd', // Add a border to separate header from content
+    paddingBottom: '10px', // Add padding at the bottom of the header
+  },
+  titleContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    flex: '1', // Allow titleContainer to take up remaining space
+    justifyContent: 'center', // Center align content horizontally
+  },
+  companyLogo: {
+    width: 'auto',
+    height: '40px', // Adjust the height as per your design
+    marginLeft: '20px', // Adjust the margin as per your design
+  },
+ 
 };
 
 export default EmployeeDashboard;
