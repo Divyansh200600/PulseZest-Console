@@ -185,7 +185,7 @@ return (
 
   <div style={styles.container}>
     <header style={styles.h1}>
-      <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
+      <h1 style={styles.title}>Employee Dashboard!</h1>
       <button style={styles.logoutButton} onClick={handleLogout}>
         Logout
       </button>
