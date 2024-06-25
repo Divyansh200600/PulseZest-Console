@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {  doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebaseConfig';
 import companyLogo from '../../../assets/2.png'; 
 
@@ -185,7 +185,7 @@ return (
 
   <div style={styles.container}>
     <header style={styles.h1}>
-      <h1 style={styles.title}>Employee Dashboard!</h1>
+      <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
       <button style={styles.logoutButton} onClick={handleLogout}>
         Logout
       </button>
