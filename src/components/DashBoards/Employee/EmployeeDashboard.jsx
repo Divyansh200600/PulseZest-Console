@@ -14,6 +14,10 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  BottomNavigation,
+  BottomNavigationAction,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   AccountCircle,
@@ -49,6 +53,9 @@ const EmployeeDashboard = () => {
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [lastMarkedTime, setLastMarkedTime] = useState(null);
   const [currentSection, setCurrentSection] = useState('profile');
+
+  const theme = useTheme();
+  const isMobileView = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -238,6 +245,7 @@ const EmployeeDashboard = () => {
                   variant="outlined"
                   color="primary"
                   onClick={() => handleDepartmentClick(dept)}
+                  sx={{ margin: '5px 0' }}
                 >
                   {dept}
                 </Button>
@@ -411,63 +419,115 @@ const EmployeeDashboard = () => {
         </Button>
       </Header>
       <Main>
-        <Sidebar>
-          <List component="nav">
-            <ListItem
-              button
-              selected={currentSection === 'profile'}
-              onClick={() => handleSectionChange('profile')}
-            >
-              <ListItemIcon>
-                <AccountCircle />
-              </ListItemIcon>
-              <ListItemText primary="Profile" />
-            </ListItem>
-            <ListItem
-              button
-              selected={currentSection === 'workingDepartment'}
-              onClick={() => handleSectionChange('workingDepartment')}
-            >
-              <ListItemIcon>
-                <Work />
-              </ListItemIcon>
-              <ListItemText primary="Department & Role" />
-            </ListItem>
-            <ListItem
-              button
-              selected={currentSection === 'documents'}
-              onClick={() => handleSectionChange('documents')}
-            >
-              <ListItemIcon>
-                <Article />
-              </ListItemIcon>
-              <ListItemText primary="Documents" />
-            </ListItem>
-            <ListItem
-              button
-              selected={currentSection === 'bank'}
-              onClick={() => handleSectionChange('bank')}
-            >
-              <ListItemIcon>
-                <AccountBalance />
-              </ListItemIcon>
-              <ListItemText primary="Bank Details" />
-            </ListItem>
-            <ListItem
-              button
-              selected={currentSection === 'attendance'}
-              onClick={() => handleSectionChange('attendance')}
-            >
-              <ListItemIcon>
-                <EventAvailable />
-              </ListItemIcon>
-              <ListItemText primary="Attendance" />
-            </ListItem>
-          </List>
-        </Sidebar>
-        <Divider orientation="vertical" flexItem />
-        <ContentSection />
+        {!isMobileView && (
+          <>
+            <Sidebar>
+              <List component="nav">
+                <ListItem
+                  button
+                  selected={currentSection === 'profile'}
+                  onClick={() => handleSectionChange('profile')}
+                >
+                  <ListItemIcon>
+                    <AccountCircle />
+                  </ListItemIcon>
+                  <ListItemText primary="Profile" />
+                </ListItem>
+                <ListItem
+                  button
+                  selected={currentSection === 'workingDepartment'}
+                  onClick={() => handleSectionChange('workingDepartment')}
+                >
+                  <ListItemIcon>
+                    <Work />
+                  </ListItemIcon>
+                  <ListItemText primary="Department & Role" />
+                </ListItem>
+                <ListItem
+                  button
+                  selected={currentSection === 'documents'}
+                  onClick={() => handleSectionChange('documents')}
+                >
+                  <ListItemIcon>
+                    <Article />
+                  </ListItemIcon>
+                  <ListItemText primary="Documents" />
+                </ListItem>
+                <ListItem
+                  button
+                  selected={currentSection === 'bank'}
+                  onClick={() => handleSectionChange('bank')}
+                >
+                  <ListItemIcon>
+                    <AccountBalance />
+                  </ListItemIcon>
+                  <ListItemText primary="Bank Details" />
+                </ListItem>
+                <ListItem
+                  button
+                  selected={currentSection === 'attendance'}
+                  onClick={() => handleSectionChange('attendance')}
+                >
+                  <ListItemIcon>
+                    <EventAvailable />
+                  </ListItemIcon>
+                  <ListItemText primary="Attendance" />
+                </ListItem>
+              </List>
+            </Sidebar>
+            <Divider orientation="vertical" flexItem />
+          </>
+        )}
+        <Content>
+          <ContentSection />
+        </Content>
       </Main>
+      {isMobileView && (
+        <BottomNavigation
+          value={currentSection}
+          onChange={(event, newValue) => handleSectionChange(newValue)}
+          showLabels={false} // Hide the labels of the icons
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            width: '100%',
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: '0 -3px 5px rgba(0,0,0,0.1)',
+            zIndex: 1000,
+          }}
+        >
+          <BottomNavigationAction
+            label="Profile"
+            value="profile"
+            icon={<AccountCircle />}
+            sx={{ minWidth: 'auto' }}
+          />
+          <BottomNavigationAction
+            label="Department"
+            value="workingDepartment"
+            icon={<Work />}
+            sx={{ minWidth: 'auto' }}
+          />
+          <BottomNavigationAction
+            label="Documents"
+            value="documents"
+            icon={<Article />}
+            sx={{ minWidth: 'auto' }}
+          />
+          <BottomNavigationAction
+            label="Bank"
+            value="bank"
+            icon={<AccountBalance />}
+            sx={{ minWidth: 'auto' }}
+          />
+          <BottomNavigationAction
+            label="Attendance"
+            value="attendance"
+            icon={<EventAvailable />}
+            sx={{ minWidth: 'auto' }}
+          />
+        </BottomNavigation>
+      )}
     </Container>
   );
 };
