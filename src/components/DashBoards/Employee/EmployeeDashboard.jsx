@@ -1,9 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import {  doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebaseConfig';
-import companyLogo from '../../../assets/2.png'; 
+import {
+  CircularProgress,
+  Box,
+  Typography,
+  Button,
+  Avatar,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from '@mui/material';
+import {
+  AccountCircle,
+  Work,
+  Article,
+  AccountBalance,
+  EventAvailable,
+  Logout,
+} from '@mui/icons-material';
+import companyLogo from '../../../assets/2.png';
+import {
+  Container,
+  Header,
+  TitleContainer,
+  CompanyLogo,
+  Main,
+  Sidebar,
+  Content,
+  Section,
+  SectionTitle,
+  EmployeeDetails,
+  PersonalInfo,
+  DataItem,
+  ViewButton,
+  MarkButton,
+} from './styles';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -11,8 +47,8 @@ const EmployeeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [attendanceData, setAttendanceData] = useState({});
   const [attendanceMarked, setAttendanceMarked] = useState(false);
-  const [lastMarkedTime, setLastMarkedTime] = useState(null); // State to store last attendance marked time
-  const [currentSection, setCurrentSection] = useState('profile'); // Default section to show
+  const [lastMarkedTime, setLastMarkedTime] = useState(null);
+  const [currentSection, setCurrentSection] = useState('profile');
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -46,10 +82,9 @@ const EmployeeDashboard = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Check if it's past 11:59 PM and attendance hasn't been marked
     const now = new Date();
     const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999); // Set to 11:59:59.999 PM
+    endOfDay.setHours(23, 59, 59, 999);
 
     if (now > endOfDay && !attendanceMarked) {
       markAttendance('absent');
@@ -60,7 +95,11 @@ const EmployeeDashboard = () => {
     const today = new Date();
     const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
-    const attendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, formattedDate);
+    const attendanceDocRef = doc(
+      db,
+      `employeeDetails/${userId}/attendance`,
+      formattedDate
+    );
     const attendanceDocSnap = await getDoc(attendanceDocRef);
 
     if (attendanceDocSnap.exists()) {
@@ -74,40 +113,46 @@ const EmployeeDashboard = () => {
 
   const markAttendance = async (attendanceStatus) => {
     const user = auth.currentUser;
-  
+
     if (user) {
       const userId = user.uid;
       const today = new Date();
       const formattedDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-  
-      // Mark current day's attendance
-      const attendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, formattedDate);
-  
+
+      const attendanceDocRef = doc(
+        db,
+        `employeeDetails/${userId}/attendance`,
+        formattedDate
+      );
+
       try {
-        // Fetch previous day's attendance data
         const prevDay = new Date(today);
-        prevDay.setDate(today.getDate() - 1); // Previous day
-  
-        const prevFormattedDate = `${prevDay.getDate()}-${prevDay.getMonth() + 1}-${prevDay.getFullYear()}`;
-        const prevAttendanceDocRef = doc(db, `employeeDetails/${userId}/attendance`, prevFormattedDate);
+        prevDay.setDate(today.getDate() - 1);
+
+        const prevFormattedDate = `${prevDay.getDate()}-${prevDay.getMonth() + 1
+          }-${prevDay.getFullYear()}`;
+        const prevAttendanceDocRef = doc(
+          db,
+          `employeeDetails/${userId}/attendance`,
+          prevFormattedDate
+        );
         const prevAttendanceDocSnap = await getDoc(prevAttendanceDocRef);
-  
-        // Mark current day's attendance
+
         await setDoc(attendanceDocRef, {
           attendance: attendanceStatus,
           timestamp: serverTimestamp(),
         });
-  
-        // Update local state
+
         setAttendanceData({ attendance: attendanceStatus });
         setAttendanceMarked(true);
-        setLastMarkedTime(today); // Update last marked time
-  
-        // Check and mark previous day as absent if today's attendance is marked
+        setLastMarkedTime(today);
+
         if (attendanceStatus === 'present' && prevAttendanceDocSnap.exists()) {
           // Do nothing if previous day is already marked
-        } else if (attendanceStatus === 'present' && !prevAttendanceDocSnap.exists()) {
-          // Mark previous day as absent
+        } else if (
+          attendanceStatus === 'present' &&
+          !prevAttendanceDocSnap.exists()
+        ) {
           await setDoc(prevAttendanceDocRef, {
             attendance: 'absent',
             timestamp: serverTimestamp(),
@@ -124,9 +169,7 @@ const EmployeeDashboard = () => {
   };
 
   const handleDepartmentClick = (dept) => {
-    // Implement your logic here
     console.log(`Clicked department: ${dept}`);
-    // Example: Navigate to a department-specific page or show department details
   };
 
   const handleLogout = async () => {
@@ -139,411 +182,294 @@ const EmployeeDashboard = () => {
   };
 
   const handleViewFile = (fileUrl) => {
-    // Implement your logic here
-    window.open(fileUrl); // Opens the file in a new tab
+    window.open(fileUrl);
+  };
+
+  const ContentSection = () => {
+    switch (currentSection) {
+      case 'profile':
+        return (
+          <Section>
+            <SectionTitle>Profile</SectionTitle>
+            <EmployeeDetails>
+              <Avatar
+                src={userData.passportPhotoUrl}
+                alt="Employee Avatar"
+                sx={{
+                  width: 120,
+                  height: 120,
+                  border: '2px solid #ccc',
+                  borderRadius: '50%',
+                  marginRight: '20px', // Added margin between avatar and details
+                }}
+              />
+              <PersonalInfo>
+                <Typography variant="body1">
+                  <strong>Name:</strong> {userData.fullName}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Email:</strong> {userData.email}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Address:</strong> {userData.address}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Phone:</strong> {userData.phoneNumber}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Alternative Phone No:</strong>{' '}
+                  {userData.alternativePhoneNumber}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Microsoft Teams Id:</strong> {userData.teamsId}
+                </Typography>
+              </PersonalInfo>
+            </EmployeeDetails>
+          </Section>
+        );
+      case 'workingDepartment':
+        return (
+          <Section>
+            <SectionTitle>Department & Role</SectionTitle>
+            {userData.department && userData.department.length > 0 ? (
+              userData.department.map((dept, index) => (
+                <Button
+                  key={index}
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => handleDepartmentClick(dept)}
+                >
+                  {dept}
+                </Button>
+              ))
+            ) : (
+              <Typography variant="body1">No department assigned</Typography>
+            )}
+          </Section>
+        );
+      case 'documents':
+        return (
+          <Section>
+            <SectionTitle>Documents</SectionTitle>
+            {userData.passportPhotoUrl && (
+              <DataItem>
+                <Typography variant="body1">
+                  <strong>Passport Size Photo:</strong>
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  <ViewButton
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleViewFile(userData.passportPhotoUrl)}
+                  >
+                    View
+                  </ViewButton>
+                </Box>
+              </DataItem>
+            )}
+            {userData.resumeUrl && (
+              <DataItem>
+                <Typography variant="body1">
+                  <strong>Resume:</strong>
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  <ViewButton
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleViewFile(userData.resumeUrl)}
+                  >
+                    View
+                  </ViewButton>
+                </Box>
+              </DataItem>
+            )}
+            {userData.aadharCardUrl && (
+              <DataItem>
+                <Typography variant="body1">
+                  <strong>Aadhar Card:</strong>
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  <ViewButton
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleViewFile(userData.aadharCardUrl)}
+                  >
+                    View
+                  </ViewButton>
+                </Box>
+              </DataItem>
+            )}
+            {userData.panCardUrl && (
+              <DataItem>
+                <Typography variant="body1">
+                  <strong>Pan Card:</strong>
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  <ViewButton
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleViewFile(userData.panCardUrl)}
+                  >
+                    View
+                  </ViewButton>
+                </Box>
+              </DataItem>
+            )}
+          </Section>
+        );
+      case 'bank':
+        return (
+          <Section>
+            <SectionTitle>Bank Details</SectionTitle>
+            <DataItem>
+              <Typography variant="body1">
+                <strong>Bank Name:</strong> {userData.bankName}
+              </Typography>
+            </DataItem>
+            <DataItem>
+              <Typography variant="body1">
+                <strong>Account Holder Name:</strong> {userData.accountHolderName}
+              </Typography>
+            </DataItem>
+            <DataItem>
+              <Typography variant="body1">
+                <strong>Account Number:</strong> {userData.bankAccountNumber}
+              </Typography>
+            </DataItem>
+            <DataItem>
+              <Typography variant="body1">
+                <strong>IFSC Code:</strong> {userData.ifscCode}
+              </Typography>
+            </DataItem>
+          </Section>
+        );
+      case 'attendance':
+        return (
+          <Section>
+            <SectionTitle>Attendance</SectionTitle>
+            <Typography variant="body1">
+              <strong>Today's Attendance:</strong>{' '}
+              {attendanceData.attendance || 'Not marked yet'}
+            </Typography>
+            {attendanceMarked && (
+              <Typography variant="body1">
+                <strong>Last Marked Time:</strong>{' '}
+                {lastMarkedTime
+                  ? `${lastMarkedTime.toLocaleDateString()} ${lastMarkedTime.toLocaleTimeString()}`
+                  : 'Not available'}
+              </Typography>
+            )}
+            {!attendanceMarked && (
+              <MarkButton
+                variant="contained"
+                color="primary"
+                onClick={() => markAttendance('present')}
+              >
+                Mark Present
+              </MarkButton>
+            )}
+          </Section>
+        );
+      default:
+        return null;
+    }
   };
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <p>Loading...</p>
-      </div>
+      <Container>
+        <CircularProgress />
+      </Container>
     );
   }
 
   if (!userData) {
     return (
-      <div style={styles.container}>
-        <header style={styles.header}>
-          <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
-          <button style={styles.logoutButton} onClick={handleLogout}>
-            Logout
-          </button>
-        </header>
-        <main style={styles.main}>
-          <div style={styles.card}>
-            <h2 style={styles.sectionTitle}>User Data:</h2>
-            <p>No user data found for Employee.</p>
-          </div>
-        </main>
-      </div>
+      <Container>
+        <Typography variant="h5">No user data found for Employee.</Typography>
+        <Button variant="contained" color="secondary" onClick={handleLogout}>
+          Logout
+        </Button>
+      </Container>
     );
   }
 
- // Display userData once loaded
-return (
-
-  <div>
-    <header style={styles.header}>
-  <div style={styles.titleContainer}>
-    <h1 style={styles.title}>Welcome to PulseZest!</h1>
-    <img src={companyLogo} alt="Company Logo" style={styles.companyLogo} />
-  </div>
- 
-</header>
-
-
-  <div style={styles.container}>
-    <header style={styles.h1}>
-      <h1 style={styles.title}>Welcome to Employee Dashboard!</h1>
-      <button style={styles.logoutButton} onClick={handleLogout}>
-        Logout
-      </button>
-    </header>
-    <main style={styles.main}>
-      <div style={{ display: 'flex' }}>
-        {/* Sidebar */}
-        <div style={styles.sidebar}>
-          <button
-            style={currentSection === 'profile' ? styles.activeSidebarButton : styles.sidebarButton}
-            onClick={() => handleSectionChange('profile')}
-          >
-            Profile
-          </button>
-          <button
-            style={currentSection === 'workingDepartment' ? styles.activeSidebarButton : styles.sidebarButton}
-            onClick={() => handleSectionChange('workingDepartment')}
-          >
-           Department & Role
-          </button>
-          <button
-            style={currentSection === 'documents' ? styles.activeSidebarButton : styles.sidebarButton}
-            onClick={() => handleSectionChange('documents')}
-          >
-            Documents
-          </button>
-          <button
-            style={currentSection === 'bank' ? styles.activeSidebarButton : styles.sidebarButton}
-            onClick={() => handleSectionChange('bank')}
-          >
-            Bank Details
-          </button>
-          <button
-            style={currentSection === 'attendance' ? styles.activeSidebarButton : styles.sidebarButton}
-            onClick={() => handleSectionChange('attendance')}
-          >
-            Attendance
-          </button>
-        </div>
-        {/* Content based on currentSection */}
-        <div style={styles.content}>
-          {currentSection === 'profile' && (
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Profile</h2>
-              <section style={styles.section}>
-            <div style={styles.employeeDetails}>
-              <div style={styles.avatarContainer}>
-                <img src={userData.passportPhotoUrl} alt="Employee Avatar" style={styles.avatar} />
-              </div>
-              <div style={styles.personalInfo}>
-                <h3 style={styles.subSectionTitle}>Personal Details</h3>
-                <div style={styles.dataItems}>
-                  <div style={styles.dataItem}>
-                    <strong>Name:</strong> {userData.fullName}
-                  </div>
-                  <div style={styles.dataItem}>
-                    <strong>Email:</strong> {userData.email}
-                  </div>
-                  <div style={styles.dataItem}>
-                    <strong>Address:</strong> {userData.address}
-                  </div>
-                  <div style={styles.dataItem}>
-                    <strong>Phone:</strong> {userData.phoneNumber}
-                  </div>
-                  <div style={styles.dataItem}>
-                    <strong>Alternative Phone No:</strong> {userData.alternativePhoneNumber}
-                  </div>
-                  <div style={styles.dataItem}>
-                    <strong>Microsoft Teams Id:</strong> {userData.teamsId}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          </section>
-          
-          )}
-           {currentSection === 'workingDepartment' && (
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Department & Role</h2>
-              <section style={styles.section}>
-           
-            <div style={styles.dataItems}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '5px' }}>
-                {userData.department && userData.department.length > 0 ? (
-                  userData.department.map((dept, index) => (
-                    <span
-                      key={index}
-                      style={{
-                        ...styles.departmentTag,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => handleDepartmentClick(dept)}
-                    >
-                      {dept}
-                    </span>
-                  ))
-                ) : (
-                  <span>No department assigned</span>
-                )}
-              </div>
-            </div>
-          </section>
-          </section>
-          )}
-          {currentSection === 'documents' && (
-           <section style={styles.section}>
-           <h3 style={styles.subSectionTitle}>Documents</h3>
-           <div style={styles.dataItems}>
-             {userData.passportPhotoUrl && (
-               <div style={styles.dataItem}>
-                 <strong>Passport Size Photo:</strong>
-                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.passportPhotoUrl)}>
-                   View
-                 </button>
-               </div>
-             )}
-             {userData.resumeUrl && (
-               <div style={styles.dataItem}>
-                 <strong>Resume:</strong>
-                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.resumeUrl)}>
-                   View
-                 </button>
-               </div>
-             )}
-             {userData.aadharCardUrl && (
-               <div style={styles.dataItem}>
-                 <strong>Aadhar Card:</strong>
-                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.aadharCardUrl)}>
-                   View
-                 </button>
-               </div>
-             )}
-             {userData.panCardUrl && (
-               <div style={styles.dataItem}>
-                 <strong>Pan Card:</strong>
-                 <button style={styles.viewButton} onClick={() => handleViewFile(userData.panCardUrl)}>
-                   View
-                 </button>
-               </div>
-             )}
-           </div>
-         </section>
-
-          )}
-          {currentSection === 'bank' && (
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Bank Details</h2>
-              <section style={styles.section}>
-            <div style={styles.dataItem}>
-              <strong>Account Holder Name:</strong> {userData.accountHolderName}
-            </div>
-            <div style={styles.dataItem}>
-              <strong>Account Number:</strong> {userData.bankAccountNumber}
-            </div>
-            <div style={styles.dataItem}>
-              <strong>IFSC Code:</strong> {userData.ifscCode}
-            </div>
-          </section>
-          </section>
-          )}
-          {currentSection === 'attendance' && (
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Attendance</h2>
-              {/* Attendance content here */}
-              <div style={styles.dataItems}>
-                {attendanceMarked ? (
-                  <p>Attendance for today: {attendanceData.attendance}</p>
-                ) : (
-                  <button style={styles.markButton} onClick={() => markAttendance('present')}>
-                    Mark Attendance
-                  </button>
-                )}
-              </div>
-            </section>
-          )}
-        </div>
-      </div>
-    </main>
-  </div>
-  </div>
-);
-};
-
-const styles = {
-  container: {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '20px',
-    backgroundColor: '#f5f5f5',
-    borderRadius: '10px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#333',
-    margin: '0',
-  },
-  logoutButton: {
-    backgroundColor: '#f44336',
-    color: '#fff',
-    border: 'none',
-    padding: '10px 20px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    transition: 'background-color 0.3s ease',
-  },
-  main: {
-    backgroundColor: '#ffffff',
-    padding: '20px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    overflowY: 'auto', // Scrollbar for main content
-    maxHeight: '60vh', // Limit height and add scroll bar when content exceeds
-    flex: '1', // Fill remaining space in the flex container
-  },
-  sidebar: {
-    backgroundColor: '#f0f0f0',
-    padding: '20px',
-    minWidth: '200px',
-    marginRight: '20px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  sidebarButton: {
-    backgroundColor: '#ddd',
-    color: '#333',
-    border: 'none',
-    padding: '10px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    marginBottom: '10px',
-    textAlign: 'left',
-    transition: 'background-color 0.3s ease',
-  },
-  activeSidebarButton: {
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    padding: '10px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    marginBottom: '10px',
-    textAlign: 'left',
-    transition: 'background-color 0.3s ease',
-  },
-  content: {
-    flex: '1', // Fill remaining space in the flex container
-  },
-  section: {
-    marginBottom: '20px',
-  },
-  sectionTitle: {
-    fontSize: '20px',
-    marginBottom: '10px',
-    color: '#555',
-  },
-  subSectionTitle: {
-    fontSize: '18px',
-    marginBottom: '10px',
-    color: '#333',
-  },
-  dataItems: {
-    marginTop: '10px',
-  },
-  dataItem: {
-    marginBottom: '10px',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  departmentTag: {
-    backgroundColor: '#007bff',
-    color: 'white',
-    padding: '5px 10px',
-    border: 'none',
-    borderRadius: '5px',
-    marginRight: '10px',
-    marginBottom: '5px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    cursor: 'pointer',
-  },
-  viewButton: {
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    padding: '5px 10px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginLeft: '10px',
-    transition: 'background-color 0.3s ease',
-  },
-  employeeDetails: {
-    display: 'flex',
-    alignItems: 'flex-start',
-  },
-  avatarContainer: {
-    marginRight: '20px',
-  },
-  avatar: {
-    width: '120px',
-    height: '120px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
-  personalInfo: {
-    flex: '1',
-  },
-  markButton: {
-    backgroundColor: '#2196F3',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    transition: 'background-color 0.3s ease',
-  },
-    
-  h1: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    borderBottom: '1px solid #ddd', // Add a border to separate header from content
-    paddingBottom: '10px', // Add padding at the bottom of the header
-  },
-  titleContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    flex: '1', // Allow titleContainer to take up remaining space
-    justifyContent: 'center', // Center align content horizontally
-  },
-  companyLogo: {
-    width: 'auto',
-    height: '40px', // Adjust the height as per your design
-    marginLeft: '20px', // Adjust the margin as per your design
-  },
- 
+  return (
+    <Container>
+      <Header>
+        <TitleContainer>
+          <Typography variant="h4">Welcome to PulseZest!</Typography>
+          <CompanyLogo src={companyLogo} alt="Company Logo" />
+        </TitleContainer>
+        <Button
+          startIcon={<Logout />}
+          variant="contained"
+          color="secondary"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
+      </Header>
+      <Main>
+        <Sidebar>
+          <List component="nav">
+            <ListItem
+              button
+              selected={currentSection === 'profile'}
+              onClick={() => handleSectionChange('profile')}
+            >
+              <ListItemIcon>
+                <AccountCircle />
+              </ListItemIcon>
+              <ListItemText primary="Profile" />
+            </ListItem>
+            <ListItem
+              button
+              selected={currentSection === 'workingDepartment'}
+              onClick={() => handleSectionChange('workingDepartment')}
+            >
+              <ListItemIcon>
+                <Work />
+              </ListItemIcon>
+              <ListItemText primary="Department & Role" />
+            </ListItem>
+            <ListItem
+              button
+              selected={currentSection === 'documents'}
+              onClick={() => handleSectionChange('documents')}
+            >
+              <ListItemIcon>
+                <Article />
+              </ListItemIcon>
+              <ListItemText primary="Documents" />
+            </ListItem>
+            <ListItem
+              button
+              selected={currentSection === 'bank'}
+              onClick={() => handleSectionChange('bank')}
+            >
+              <ListItemIcon>
+                <AccountBalance />
+              </ListItemIcon>
+              <ListItemText primary="Bank Details" />
+            </ListItem>
+            <ListItem
+              button
+              selected={currentSection === 'attendance'}
+              onClick={() => handleSectionChange('attendance')}
+            >
+              <ListItemIcon>
+                <EventAvailable />
+              </ListItemIcon>
+              <ListItemText primary="Attendance" />
+            </ListItem>
+          </List>
+        </Sidebar>
+        <Divider orientation="vertical" flexItem />
+        <ContentSection />
+      </Main>
+    </Container>
+  );
 };
 
 export default EmployeeDashboard;
