@@ -102,6 +102,7 @@ export const DataItem = styled(Box)({
 });
 
 export const ViewButton = styled(Button)({
+  display: 'flex',
   marginLeft: '100px', // Adjusted spacing
 });
 

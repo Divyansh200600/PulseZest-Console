@@ -3,47 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebaseConfig';
-import {
-  CircularProgress,
-  Box,
-  Typography,
-  Button,
-  Avatar,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  BottomNavigation,
-  BottomNavigationAction,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import {
-  AccountCircle,
-  Work,
-  Article,
-  AccountBalance,
-  EventAvailable,
-  Logout,
-} from '@mui/icons-material';
+import {CircularProgress,Box,Typography,Button,Avatar,List,ListItem,ListItemIcon,ListItemText,Divider,BottomNavigation,BottomNavigationAction,useMediaQuery, useTheme,} from '@mui/material';
+import {AccountCircle,Work,Article,AccountBalance,EventAvailable, Logout,} from '@mui/icons-material';
 import companyLogo from '../../../assets/2.png';
-import {
-  Container,
-  Header,
-  TitleContainer,
-  CompanyLogo,
-  Main,
-  Sidebar,
-  Content,
-  Section,
-  SectionTitle,
-  EmployeeDetails,
-  PersonalInfo,
-  DataItem,
-  ViewButton,
-  MarkButton,
-} from './styles';
+import {Container,Header,TitleContainer,CompanyLogo,Main,Sidebar,Content,Section,SectionTitle,EmployeeDetails,PersonalInfo,DataItem,ViewButton,MarkButton,} from './styles';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -264,7 +227,7 @@ const EmployeeDashboard = () => {
                 <Typography variant="body1">
                   <strong>Passport Size Photo:</strong>
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                <Box sx={{ display: 'block', alignItems: 'center', marginTop: '8px' }}>
                   <ViewButton
                     variant="contained"
                     color="primary"
