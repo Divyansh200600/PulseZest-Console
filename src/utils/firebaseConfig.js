@@ -3,15 +3,16 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyA6hEth0ifgQLgJv7mNr5686WNIyuBIYHE",
-    authDomain: "login-pulsezest.firebaseapp.com",
-    projectId: "login-pulsezest",
-    storageBucket: "login-pulsezest.appspot.com",
-    messagingSenderId: "882516520245",
-    appId: "1:882516520245:web:a462acbf725bccf12f707c",
+    apiKey: "AIzaSyCaBrxT4HXxYv03gli19ByspDXDkaNFGho",
+    authDomain: "pulsezest-ffe99.firebaseapp.com",
+    projectId: "pulsezest-ffe99",
+    storageBucket: "pulsezest-ffe99.appspot.com",
+    messagingSenderId: "434270739454",
+    appId: "1:434270739454:web:f011c842e80cc51f1d7eaf",
+    measurementId: "G-Z65N3GBVT3"
 };
 
-// Initialize Firebase
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

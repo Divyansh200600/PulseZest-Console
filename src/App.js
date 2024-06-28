@@ -4,7 +4,7 @@ import LoginFormPage from './pages/loginFormPage';
 import 'react-toastify/dist/ReactToastify.css';
 import Db from './pages/dbPage';
 import { ProtectedRoute, PublicRoute } from './utils/ProtectedRoute';
-
+import AdminControl from "./components/DashBoards/AdminControls/adminControl";
 function App() {
   return (
     <Router>
@@ -14,6 +14,7 @@ function App() {
       <Route path="/" element={<PublicRoute element={LoginFormPage} />} />
       <Route path="/login" element={<PublicRoute element={LoginFormPage} />} />
       <Route path="/db" element={<ProtectedRoute element={Db} />} />
+      <Route path="/admin-control" element={<AdminControl element={AdminControl} />} />
     </Routes>
   </Router>
   );
