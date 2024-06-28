@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -58,8 +58,6 @@ const LoginFormPage = () => {
     }
   }, []);
 
-  
-
   const handleLogin = async () => {
     const email = document.getElementById('username').value;
     const password = document.getElementById('password').value;
@@ -69,10 +67,47 @@ const LoginFormPage = () => {
       toast.success('Login successful!');
       navigate('/db');
     } catch (error) {
-      toast.error(`Login failed: ${error.message}`);
+      handleFirebaseError(error);
     }
   };
+
+  const handleResetPassword = async () => {
+    const email = document.getElementById('username').value;
   
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success('Password reset email sent. Please check your inbox.', {
+        toastId: 'reset-password-toast', // Ensure unique ID to manage the toast
+        bodyClassName: 'toast-body-success', // CSS class for the success toast body
+      });
+    } catch (error) {
+      handleFirebaseError(error);
+    }
+  };
+
+  const handleFirebaseError = (error) => {
+    let errorMessage = 'An error occurred. Please try again.';
+    switch (error.code) {
+      case 'auth/user-not-found':
+        errorMessage = 'No user found with this email.';
+        break;
+      case 'auth/wrong-password':
+        errorMessage = 'Incorrect password. Please try again.';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = 'Invalid email format.';
+        break;
+      case 'auth/user-disabled':
+        errorMessage = 'User account is disabled.';
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = 'Too many requests. Please try again later.';
+        break;
+      default:
+        break;
+    }
+    toast.error(`Login failed: ${errorMessage}`);
+  };
 
   if (loggedIn) {
     navigate('/db', { replace: true });
@@ -81,14 +116,15 @@ const LoginFormPage = () => {
 
   return (
     <div>
-     <div id="particles-js"></div>
+      <div id="particles-js"></div>
       <div className="glow-container">
         <div className="glow-text">Welcome To</div>
         <div className="glow-text">PulseZest</div>
       </div>
+      
       <div className="container">
         <div className="login-box">
-          <h2>Login</h2>
+          <h2 className="headline">Login</h2>
           <form id="loginForm">
             <div className="user-box">
               <input type="text" id="username" name="username" required />
@@ -106,11 +142,18 @@ const LoginFormPage = () => {
               <span></span>
               Submit
             </a>
+            <p className="forgot-password" onClick={handleResetPassword} style={{ color: '#fff', cursor: 'pointer' }}>Forgot your password?</p>
+
           </form>
         </div>
       </div>
 
-      <ToastContainer />
+      <ToastContainer
+        bodyClassName={{
+          success: 'toast-body-success',
+          error: 'toast-body-error',
+        }}
+      />
     </div>
   );
 };
